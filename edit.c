@@ -179,12 +179,12 @@ struct editor {
 struct env {
 	struct editor *current; // Current editor
 
-	unsigned char *clipboard; // Clipboard
+	char *clipboard; // Clipboard
 	int clipsize; // Clipboard size
 
-	unsigned char *search; // Search text.
+	char *search; // Search text.
 
-	unsigned char *linebuf; // Scratch buffer.
+	char *linebuf; // Scratch buffer.
 
 	int cols; // Console columns
 	int lines; // Console lines
@@ -227,8 +227,6 @@ void reset_undo(struct editor *ed) {
 }
 
 struct editor *create_editor(struct env *env) {
-	int i;
-
 	struct editor *ed = (struct editor *) malloc(sizeof(struct editor));
 	memset(ed, 0, sizeof(struct editor));
 	if (env->current) {
@@ -753,7 +751,7 @@ void outch(char c) {
 	putchar(c);
 }
 
-void outbuf(unsigned char *buf, int len) {
+void outbuf(char *buf, int len) {
 	fwrite(buf, 1, len, stdout);
 }
 
@@ -996,7 +994,7 @@ int getkey() {
 }
 
 int prompt(struct editor *ed, char *msg) {
-	int maxlen, len, ch, selstart, selend;
+	int maxlen, len, ch;
 	char *buf = ed->env->linebuf;
 
 	gotoxy(0, ed->env->lines);
@@ -1075,7 +1073,7 @@ void display_line(struct editor *ed, int pos, int fullline) {
 	int col = 0;
 	int margin = ed->margin;
 	int maxcol = ed->env->cols + margin;
-	unsigned char *bufptr = ed->env->linebuf;
+	char *bufptr = ed->env->linebuf;
 	unsigned char *p = text_ptr(ed, pos);
 	int selstart, selend, ch;
 	char *s;
@@ -1289,8 +1287,9 @@ void right(struct editor *ed, int select) {
 }
 
 int wordchar(int ch) {
-	return ch >= 'A' && ch <= 'Z' || ch >= 'a' && ch <= 'z'
-			|| ch >= '0' && ch <= '9';
+	return (ch >= 'A' && ch <= 'Z')
+		|| (ch >= 'a' && ch <= 'z')
+		|| (ch >= '0' && ch <= '9');
 }
 
 void wordleft(struct editor *ed, int select) {
@@ -1588,7 +1587,7 @@ void copy_selection(struct editor *ed) {
 	if (!get_selection(ed, &selstart, &selend))
 		return;
 	ed->env->clipsize = selend - selstart;
-	ed->env->clipboard = (unsigned char *) realloc(ed->env->clipboard,
+	ed->env->clipboard = realloc(ed->env->clipboard,
 			ed->env->clipsize);
 	copy(ed, ed->env->clipboard, selstart, ed->env->clipsize);
 }
@@ -2189,7 +2188,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (!isatty(fileno(stdin)))
-		(void *) freopen("/dev/tty", "r", stdin);
+		freopen("/dev/tty", "r", stdin);
 
 	setvbuf(stdout, NULL, 0, 8192);
 
