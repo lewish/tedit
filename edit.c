@@ -49,8 +49,10 @@
 #include <sys/ioctl.h>
 #include <termios.h>
 #define O_BINARY 0
+#define NEW_LINE "\n"
 #endif
 
+#define NEW_LINE "\r\n"
 #define MINEXTEND      32768
 #define LINEBUF_EXTRA  32
 #define TABSIZE        8
@@ -1335,7 +1337,7 @@ void newline(struct editor *ed) {
   unsigned char ch;
 
   erase_selection(ed);
-  insert(ed, ed->linepos + ed->col, "\r\n", 2);
+  insert(ed, ed->linepos + ed->col, NEW_LINE, 2);
   ed->col = ed->lastcol = 0;
   ed->line++;
   p = ed->linepos;
@@ -1877,9 +1879,13 @@ void edit(struct editor *ed) {
 //
 // main
 //
+struct env env;
+
+void handle_winch() {
+	redraw_screen(env.current);
+}
 
 int main(int argc, char *argv[]) {
-  struct env env;
   int rc;
   int i;
   sigset_t blocked_sigmask, orig_sigmask;
@@ -1934,7 +1940,9 @@ int main(int argc, char *argv[]) {
   sigaddset(&blocked_sigmask, SIGINT);
   sigaddset(&blocked_sigmask, SIGTSTP);
   sigaddset(&blocked_sigmask, SIGABRT);
+  //sigaddset(&blocked_sigmask, SIGWINCH);
   sigprocmask(SIG_BLOCK, &blocked_sigmask, &orig_sigmask);
+  signal(SIGWINCH, handle_winch);
 
   for (;;) {
     if (!env.current) break;
