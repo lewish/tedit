@@ -1,6 +1,11 @@
 # Object files
 *.o
 
+# Eclipse
+Debug/*
+*.project
+*.cproject
+
 # Libraries
 *.lib
 *.a
