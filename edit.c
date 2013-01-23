@@ -1900,6 +1900,9 @@ void jump_to_editor(struct editor *ed) {
 void redraw_screen(struct editor *ed) {
 	get_console_size(ed->env);
 	draw_screen(ed);
+	draw_full_statusline(ed);
+	position_cursor(ed);
+	fflush(stdout);
 }
 
 int quit(struct env *env) {
