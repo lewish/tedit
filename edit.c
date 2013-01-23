@@ -2169,7 +2169,10 @@ void edit(struct editor *ed) {
 	}
 }
 
-// Window resize handler.
+// globals
+struct env env;
+
+// window resize handler
 void handle_winch() {
 	redraw_screen(env.current);
 }
@@ -2177,8 +2180,6 @@ void handle_winch() {
 //
 // main
 //
-struct env env;
-
 int main(int argc, char *argv[]) {
 	int rc;
 	int i;
