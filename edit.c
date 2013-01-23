@@ -31,6 +31,7 @@
 // SUCH DAMAGE.
 // 
 
+#include <ncurses.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -532,7 +533,7 @@ void insert(struct editor *ed, int pos, unsigned char *buf, int bufsize) {
 	replace(ed, pos, 0, buf, bufsize, 1);
 }
 
-void erase(struct editor *ed, int pos, int len) {
+void erase_section(struct editor *ed, int pos, int len) {
 	replace(ed, pos, len, NULL, 0, 1);
 }
 
@@ -729,7 +730,7 @@ int erase_selection(struct editor *ed) {
 	if (!get_selection(ed, &selstart, &selend))
 		return 0;
 	moveto(ed, selstart, 0);
-	erase(ed, selstart, selend - selstart);
+	erase_section(ed, selstart, selend - selstart);
 	ed->anchor = -1;
 	ed->refresh = 1;
 	return 1;
@@ -1519,9 +1520,9 @@ void backspace(struct editor *ed) {
 		return;
 	if (ed->col == 0) {
 		int pos = ed->linepos;
-		erase(ed, --pos, 1);
+		erase_section(ed, --pos, 1);
 		if (get(ed, pos - 1) == '\r')
-			erase(ed, --pos, 1);
+			erase_section(ed, --pos, 1);
 
 		ed->line--;
 		ed->linepos = line_start(ed, pos);
@@ -1534,7 +1535,7 @@ void backspace(struct editor *ed) {
 		}
 	} else {
 		ed->col--;
-		erase(ed, ed->linepos + ed->col, 1);
+		erase_section(ed, ed->linepos + ed->col, 1);
 		ed->lineupdate = 1;
 	}
 
@@ -1552,11 +1553,11 @@ void del(struct editor *ed) {
 	if (ch < 0)
 		return;
 
-	erase(ed, pos, 1);
+	erase_section(ed, pos, 1);
 	if (ch == '\r') {
 		ch = get(ed, pos);
 		if (ch == '\n')
-			erase(ed, pos, 1);
+			erase_section(ed, pos, 1);
 	}
 
 	if (ch == '\n') {
@@ -2184,6 +2185,9 @@ void handle_winch() {
 // main
 //
 int main(int argc, char *argv[]) {
+	// Initialize ncurses.
+	initscr();
+
 	int rc;
 	int i;
 	sigset_t blocked_sigmask, orig_sigmask;
@@ -2270,5 +2274,9 @@ int main(int argc, char *argv[]) {
 
 	setbuf(stdout, NULL);
 	sigprocmask(SIG_SETMASK, &orig_sigmask, NULL);
+
+	// Close ncurses.
+	endwin();
+
 	return 0;
 }
