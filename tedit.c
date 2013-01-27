@@ -1466,7 +1466,7 @@ void newline(struct editor *ed) {
 	unsigned char ch;
 
 	erase_selection(ed);
-	insert(ed, ed->linepos + ed->col, NEW_LINE, 2);
+	insert(ed, ed->linepos + ed->col, NEW_LINE, 1);
 	ed->col = ed->lastcol = 0;
 	ed->line++;
 	p = ed->linepos;
