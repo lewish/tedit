@@ -1,36 +1,3 @@
-//
-// edit.c
-//
-// Text editor
-//
-// Copyright (C) 2002 Michael Ringgaard. All rights reserved.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 
-// 1. Redistributions of source code must retain the above copyright 
-//    notice, this list of conditions and the following disclaimer.  
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.  
-// 3. Neither the name of the project nor the names of its contributors
-//    may be used to endorse or promote products derived from this software
-//    without specific prior written permission. 
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
-// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
-// SUCH DAMAGE.
-// 
-
 #include <ncurses.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -43,6 +10,8 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <termios.h>
+
+#include "keys.h"
 
 #define NEW_LINE "\n"
 #define O_BINARY 0
@@ -67,58 +36,6 @@
 #endif
 
 //
-// Key codes
-//
-
-#define KEY_BACKSPACE        0x101
-#define KEY_ESC              0x102
-#define KEY_INS              0x103
-#define KEY_DEL              0x104
-#define KEY_LEFT             0x105
-#define KEY_RIGHT            0x106
-#define KEY_UP               0x107
-#define KEY_DOWN             0x108
-#define KEY_HOME             0x109
-#define KEY_END              0x10A
-#define KEY_ENTER            0x10B
-#define KEY_TAB              0x10C
-#define KEY_PGUP             0x10D
-#define KEY_PGDN             0x10E
-
-#define KEY_CTRL_LEFT        0x10F
-#define KEY_CTRL_RIGHT       0x110
-#define KEY_CTRL_UP          0x111
-#define KEY_CTRL_DOWN        0x112
-#define KEY_CTRL_HOME        0x113
-#define KEY_CTRL_END         0x114
-#define KEY_CTRL_TAB         0x115
-
-#define KEY_SHIFT_LEFT       0x116
-#define KEY_SHIFT_RIGHT      0x117
-#define KEY_SHIFT_UP         0x118
-#define KEY_SHIFT_DOWN       0x119
-#define KEY_SHIFT_PGUP       0x11A
-#define KEY_SHIFT_PGDN       0x11B
-#define KEY_SHIFT_HOME       0x11C
-#define KEY_SHIFT_END        0x11D
-#define KEY_SHIFT_TAB        0x11E
-
-#define KEY_SHIFT_CTRL_LEFT  0x11F
-#define KEY_SHIFT_CTRL_RIGHT 0x120
-#define KEY_SHIFT_CTRL_UP    0x121
-#define KEY_SHIFT_CTRL_DOWN  0x122
-#define KEY_SHIFT_CTRL_HOME  0x123
-#define KEY_SHIFT_CTRL_END   0x124
-
-#define KEY_F1               0x125
-#define KEY_F3               0x126
-#define KEY_F5               0x127
-
-#define KEY_UNKNOWN          0xFFF
-
-#define ctrl(c) ((c) - 0x60)
-
-//
 // Editor data block
 //
 // Structure of split buffer:
@@ -126,7 +43,7 @@
 //    +------------------+------------------+------------------+
 //    | text before gap  |        gap       |  text after gap  |
 //    +------------------+------------------+------------------+
-//    ^                  ^                  ^                  ^     
+//    ^                  ^                  ^                  ^
 //    |                  |                  |                  |
 //  start               gap                rest               end
 //
@@ -768,229 +685,6 @@ void gotoxy(int col, int line) {
 
 	sprintf(buf, GOTOXY, line + 1, col + 1);
 	outstr(buf);
-}
-
-//
-// Keyboard functions
-//
-
-int getkey() {
-	int ch, shift, ctrl;
-
-	ch = getchar();
-	if (ch < 0)
-		return ch;
-
-	switch (ch) {
-	case 0x08:
-		return KEY_BACKSPACE;
-	case 0x09:
-		return KEY_TAB;
-	case 0x0D:
-		return KEY_ENTER;
-	case 0x0A:
-		return KEY_ENTER;
-	case 0x1B:
-		ch = getchar();
-		switch (ch) {
-		case 0x1B:
-			return KEY_ESC;
-		case 0x4F:
-			ch = getchar();
-			switch (ch) {
-			case 0x46:
-				return KEY_END;
-			case 0x48:
-				return KEY_HOME;
-			case 0x50:
-				return KEY_F1;
-			case 0x52:
-				return KEY_F3;
-			case 0x54:
-				return KEY_F5;
-			default:
-				return KEY_UNKNOWN;
-			}
-			break;
-
-		case 0x5B:
-			shift = ctrl = 0;
-			ch = getchar();
-			if (ch == 0x31) {
-				ch = getchar();
-				if (ch != 0x3B)
-					return KEY_UNKNOWN;
-				ch = getchar();
-				if (ch == 0x32)
-					shift = 1;
-				if (ch == 0x35)
-					ctrl = 1;
-				if (ch == 0x36)
-					shift = ctrl = 1;
-				ch = getchar();
-			}
-
-			switch (ch) {
-			case 0x31:
-				return getchar() == 0x7E ? KEY_HOME : KEY_UNKNOWN;
-			case 0x32:
-				return getchar() == 0x7E ? KEY_INS : KEY_UNKNOWN;
-			case 0x33:
-				return getchar() == 0x7E ? KEY_DEL : KEY_UNKNOWN;
-			case 0x34:
-				return getchar() == 0x7E ? KEY_END : KEY_UNKNOWN;
-			case 0x35:
-				return getchar() == 0x7E ? KEY_PGUP : KEY_UNKNOWN;
-			case 0x36:
-				return getchar() == 0x7E ? KEY_PGDN : KEY_UNKNOWN;
-
-			case 0x41:
-				if (shift && ctrl)
-					return KEY_SHIFT_CTRL_UP;
-				if (shift)
-					return KEY_SHIFT_UP;
-				if (ctrl)
-					return KEY_CTRL_UP;
-				return KEY_UP;
-			case 0x42:
-				if (shift && ctrl)
-					return KEY_SHIFT_CTRL_DOWN;
-				if (shift)
-					return KEY_SHIFT_DOWN;
-				if (ctrl)
-					return KEY_CTRL_DOWN;
-				return KEY_DOWN;
-			case 0x43:
-				if (shift && ctrl)
-					return KEY_SHIFT_CTRL_RIGHT;
-				if (shift)
-					return KEY_SHIFT_RIGHT;
-				if (ctrl)
-					return KEY_CTRL_RIGHT;
-				return KEY_RIGHT;
-			case 0x44:
-				if (shift && ctrl)
-					return KEY_SHIFT_CTRL_LEFT;
-				if (shift)
-					return KEY_SHIFT_LEFT;
-				if (ctrl)
-					return KEY_CTRL_LEFT;
-				return KEY_LEFT;
-			case 0x46:
-				if (shift && ctrl)
-					return KEY_SHIFT_CTRL_END;
-				if (shift)
-					return KEY_SHIFT_END;
-				if (ctrl)
-					return KEY_CTRL_END;
-				return KEY_END;
-			case 0x48:
-				if (shift && ctrl)
-					return KEY_SHIFT_CTRL_HOME;
-				if (shift)
-					return KEY_SHIFT_HOME;
-				if (ctrl)
-					return KEY_CTRL_HOME;
-				return KEY_HOME;
-			case 0x5A:
-				return KEY_SHIFT_TAB;
-
-			default:
-				return KEY_UNKNOWN;
-			}
-			break;
-
-		default:
-			return KEY_UNKNOWN;
-		}
-		break;
-
-	case 0x00:
-	case 0xE0:
-		ch = getchar();
-		switch (ch) {
-		case 0x0F:
-			return KEY_SHIFT_TAB;
-		case 0x3B:
-			return KEY_F1;
-		case 0x3D:
-			return KEY_F3;
-		case 0x3F:
-			return KEY_F5;
-		case 0x47:
-			return KEY_HOME;
-		case 0x48:
-			return KEY_UP;
-		case 0x49:
-			return KEY_PGUP;
-		case 0x4B:
-			return KEY_LEFT;
-		case 0x4D:
-			return KEY_RIGHT;
-		case 0x4F:
-			return KEY_END;
-		case 0x50:
-			return KEY_DOWN;
-		case 0x51:
-			return KEY_PGDN;
-		case 0x52:
-			return KEY_INS;
-		case 0x53:
-			return KEY_DEL;
-		case 0x73:
-			return KEY_CTRL_LEFT;
-		case 0x74:
-			return KEY_CTRL_RIGHT;
-		case 0x75:
-			return KEY_CTRL_END;
-		case 0x77:
-			return KEY_CTRL_HOME;
-		case 0x8D:
-			return KEY_CTRL_UP;
-		case 0x91:
-			return KEY_CTRL_DOWN;
-		case 0x94:
-			return KEY_CTRL_TAB;
-		case 0xB8:
-			return KEY_SHIFT_UP;
-		case 0xB7:
-			return KEY_SHIFT_HOME;
-		case 0xBF:
-			return KEY_SHIFT_END;
-		case 0xB9:
-			return KEY_SHIFT_PGUP;
-		case 0xBB:
-			return KEY_SHIFT_LEFT;
-		case 0xBD:
-			return KEY_SHIFT_RIGHT;
-		case 0xC0:
-			return KEY_SHIFT_DOWN;
-		case 0xC1:
-			return KEY_SHIFT_PGDN;
-		case 0xDB:
-			return KEY_SHIFT_CTRL_LEFT;
-		case 0xDD:
-			return KEY_SHIFT_CTRL_RIGHT;
-		case 0xD8:
-			return KEY_SHIFT_CTRL_UP;
-		case 0xE0:
-			return KEY_SHIFT_CTRL_DOWN;
-		case 0xD7:
-			return KEY_SHIFT_CTRL_HOME;
-		case 0xDF:
-			return KEY_SHIFT_CTRL_END;
-
-		default:
-			return KEY_UNKNOWN;
-		}
-		break;
-
-	case 0x7F:
-		return KEY_BACKSPACE;
-
-	default:
-		return ch;
-	}
 }
 
 int prompt(struct editor *ed, char *msg) {
