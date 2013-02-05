@@ -744,22 +744,22 @@ void display_message(struct editor *ed, char *fmt, ...) {
 
 void draw_full_statusline(struct editor *ed) {
 	struct env *env = ed->env;
-	int namewidth = env->cols - 20;
+	int namewidth = env->cols - 19;
+
 	gotoxy(0, env->lines);
 	sprintf(env->linebuf,
 			STATUS_COLOR "%*.*s%c Ln %-6dCol %-4d" CLREOL TEXT_COLOR,
 			-namewidth, namewidth, ed->filename, ed->dirty ? '*' : ' ',
 			ed->line + 1, column(ed, ed->linepos, ed->col) + 1);
 	outstr(env->linebuf);
-}
-
-void draw_statusline(struct editor *ed) {
-	gotoxy(ed->env->cols - 20, ed->env->lines);
-	sprintf(ed->env->linebuf,
-			STATUS_COLOR "%c Ln %-6dCol %-4d" CLREOL TEXT_COLOR,
-			ed->dirty ? '*' : ' ', ed->line + 1,
-			column(ed, ed->linepos, ed->col) + 1);
-	outstr(ed->env->linebuf);
+#ifdef DEBUG
+	gotoxy(0, env->lines - 1);
+	sprintf(env->linebuf,
+			STATUS_COLOR "[%02X%02X%02X%02X%02X%02X]" TEXT_COLOR,
+			last_keys[0], last_keys[1], last_keys[2], last_keys[3], last_keys[4],
+			last_keys[5]);
+	outstr(env->linebuf);
+#endif
 }
 
 void display_line(struct editor *ed, int pos, int fullline) {
@@ -1649,9 +1649,9 @@ void edit(struct editor *ed) {
 		} else if (ed->lineupdate) {
 			update_line(ed);
 			ed->lineupdate = 0;
-			draw_statusline(ed);
+			draw_full_statusline(ed);
 		} else {
-			draw_statusline(ed);
+			draw_full_statusline(ed);
 		}
 
 		position_cursor(ed);
@@ -1853,6 +1853,7 @@ void handle_winch() {
 int main(int argc, char *argv[]) {
 	// Initialize ncurses.
 	initscr();
+	initkeys();
 
 	int rc;
 	int i;

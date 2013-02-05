@@ -45,6 +45,8 @@
 #define KEY_F1               0x125
 #define KEY_F3               0x126
 #define KEY_F5               0x127
+#define KEY_F6               0x126
+#define KEY_F7               0x128
 
 #define KEY_UNKNOWN          0xFFF
 
@@ -53,5 +55,9 @@
 //
 // Keyboard functions
 //
+
+unsigned char last_keys[6];
+
+void initkeys();
 
 int getkey();

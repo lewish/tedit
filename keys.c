@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "keys.h"
 
@@ -6,10 +8,15 @@
 // Keyboard functions
 //
 
+void initkeys() {
+}
+
 int getkey() {
+	memset(last_keys, 0xFF, 6);
 	int ch, shift, ctrl;
 
 	ch = getchar();
+	last_keys[0] = ch;
 	if (ch < 0)
 		return ch;
 
@@ -24,11 +31,13 @@ int getkey() {
 		return KEY_ENTER;
 	case 0x1B:
 		ch = getchar();
+		last_keys[1] = ch;
 		switch (ch) {
 		case 0x1B:
 			return KEY_ESC;
 		case 0x4F:
 			ch = getchar();
+			last_keys[2] = ch;
 			switch (ch) {
 			case 0x46:
 				return KEY_END;
@@ -48,11 +57,14 @@ int getkey() {
 		case 0x5B:
 			shift = ctrl = 0;
 			ch = getchar();
+			last_keys[2] = ch;
 			if (ch == 0x31) {
 				ch = getchar();
+				last_keys[3] = ch;
 				if (ch != 0x3B)
 					return KEY_UNKNOWN;
 				ch = getchar();
+				last_keys[4] = ch;
 				if (ch == 0x32)
 					shift = 1;
 				if (ch == 0x35)
@@ -60,6 +72,7 @@ int getkey() {
 				if (ch == 0x36)
 					shift = ctrl = 1;
 				ch = getchar();
+				last_keys[5] = ch;
 			}
 
 			switch (ch) {
@@ -140,6 +153,7 @@ int getkey() {
 	case 0x00:
 	case 0xE0:
 		ch = getchar();
+		last_keys[1] = ch;
 		switch (ch) {
 		case 0x0F:
 			return KEY_SHIFT_TAB;
