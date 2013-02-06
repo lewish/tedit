@@ -1848,6 +1848,7 @@ struct env env;
 // window resize handler
 void handle_winch() {
 	redraw_screen(env.current);
+	signal(SIGWINCH, handle_winch);
 }
 
 //
@@ -1902,7 +1903,6 @@ int main(int argc, char *argv[]) {
 	sigaddset(&blocked_sigmask, SIGINT);
 	sigaddset(&blocked_sigmask, SIGTSTP);
 	sigaddset(&blocked_sigmask, SIGABRT);
-	//sigaddset(&blocked_sigmask, SIGWINCH);
 	sigprocmask(SIG_BLOCK, &blocked_sigmask, &orig_sigmask);
 	signal(SIGWINCH, handle_winch);
 
