@@ -1168,6 +1168,10 @@ void newline(struct editor *ed) {
 	ed->line++;
 	p = ed->linepos;
 	ed->linepos = next_line(ed, ed->linepos);
+
+	// This causes whitespace to be copied over to new lines.
+	// Causes issues if pasting text in, so disabled for now.
+	/*
 	for (;;) {
 		ch = get(ed, p++);
 		if (ch == ' ' || ch == '\t') {
@@ -1177,6 +1181,8 @@ void newline(struct editor *ed) {
 			break;
 		}
 	}
+	*/
+
 	ed->lastcol = ed->col;
 
 	ed->refresh = 1;
