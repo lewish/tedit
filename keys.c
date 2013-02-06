@@ -9,14 +9,22 @@
 //
 
 void initkeys() {
+	memset(last_keys, 0xFF, LAST_KEYS_LENGTH);
+}
+
+int getchar_logged() {
+	int ch = getchar();
+	for(int i = 1; i < LAST_KEYS_LENGTH; i++) {
+		last_keys[i-1] = last_keys[i];
+	}
+	last_keys[LAST_KEYS_LENGTH - 1] = ch;
+	return ch;
 }
 
 int getkey() {
-	memset(last_keys, 0xFF, 6);
 	int ch, shift, ctrl;
 
-	ch = getchar();
-	last_keys[0] = ch;
+	ch = getchar_logged();
 	if (ch < 0)
 		return ch;
 
@@ -30,14 +38,12 @@ int getkey() {
 	case 0x0A:
 		return KEY_ENTER;
 	case 0x1B:
-		ch = getchar();
-		last_keys[1] = ch;
+		ch = getchar_logged();
 		switch (ch) {
 		case 0x1B:
 			return KEY_ESC;
 		case 0x4F:
-			ch = getchar();
-			last_keys[2] = ch;
+			ch = getchar_logged();
 			switch (ch) {
 			case 0x46:
 				return KEY_END;
@@ -56,38 +62,43 @@ int getkey() {
 
 		case 0x5B:
 			shift = ctrl = 0;
-			ch = getchar();
-			last_keys[2] = ch;
+			ch = getchar_logged();
 			if (ch == 0x31) {
-				ch = getchar();
-				last_keys[3] = ch;
-				if (ch != 0x3B)
-					return KEY_UNKNOWN;
-				ch = getchar();
-				last_keys[4] = ch;
-				if (ch == 0x32)
-					shift = 1;
-				if (ch == 0x35)
-					ctrl = 1;
-				if (ch == 0x36)
-					shift = ctrl = 1;
-				ch = getchar();
-				last_keys[5] = ch;
+				ch = getchar_logged();
+				if (ch == 0x3B) {
+					ch = getchar_logged();
+					if (ch == 0x32)
+						shift = 1;
+					if (ch == 0x35)
+						ctrl = 1;
+					if (ch == 0x36)
+						shift = ctrl = 1;
+					ch = getchar_logged();
+				} else {
+					switch (ch) {
+					case 0x35:
+						return getchar_logged() == 0x7E ? KEY_F5 : KEY_UNKNOWN;
+					case 0x37:
+						return getchar_logged() == 0x7E ? KEY_F6 : KEY_UNKNOWN;
+					case 0x38:
+						return getchar_logged() == 0x7E ? KEY_F7 : KEY_UNKNOWN;
+					}
+				}
 			}
 
 			switch (ch) {
 			case 0x31:
-				return getchar() == 0x7E ? KEY_HOME : KEY_UNKNOWN;
+				return getchar_logged() == 0x7E ? KEY_HOME : KEY_UNKNOWN;
 			case 0x32:
-				return getchar() == 0x7E ? KEY_INS : KEY_UNKNOWN;
+				return getchar_logged() == 0x7E ? KEY_INS : KEY_UNKNOWN;
 			case 0x33:
-				return getchar() == 0x7E ? KEY_DEL : KEY_UNKNOWN;
+				return getchar_logged() == 0x7E ? KEY_DEL : KEY_UNKNOWN;
 			case 0x34:
-				return getchar() == 0x7E ? KEY_END : KEY_UNKNOWN;
+				return getchar_logged() == 0x7E ? KEY_END : KEY_UNKNOWN;
 			case 0x35:
-				return getchar() == 0x7E ? KEY_PGUP : KEY_UNKNOWN;
+				return getchar_logged() == 0x7E ? KEY_PGUP : KEY_UNKNOWN;
 			case 0x36:
-				return getchar() == 0x7E ? KEY_PGDN : KEY_UNKNOWN;
+				return getchar_logged() == 0x7E ? KEY_PGDN : KEY_UNKNOWN;
 
 			case 0x41:
 				if (shift && ctrl)
@@ -152,8 +163,7 @@ int getkey() {
 
 	case 0x00:
 	case 0xE0:
-		ch = getchar();
-		last_keys[1] = ch;
+		ch = getchar_logged();
 		switch (ch) {
 		case 0x0F:
 			return KEY_SHIFT_TAB;

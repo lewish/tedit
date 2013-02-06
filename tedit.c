@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include <ncurses.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -33,6 +35,7 @@
 #define TEXT_COLOR       "\033[0m"
 #define SELECT_COLOR     "\033[7m\033[1m"
 #define STATUS_COLOR     "\033[1m\033[7m"
+
 #endif
 
 //

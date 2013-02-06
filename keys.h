@@ -52,11 +52,13 @@
 
 #define ctrl(c) ((c) - 0x60)
 
+#define LAST_KEYS_LENGTH     6
+
 //
 // Keyboard functions
 //
 
-unsigned char last_keys[6];
+unsigned char last_keys[LAST_KEYS_LENGTH];
 
 void initkeys();
 
